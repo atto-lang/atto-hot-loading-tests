@@ -1,0 +1,70 @@
+name: Hot-loading conformance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - 'test/**'
+  workflow_dispatch:
+    inputs:
+      source_mirror_ref:
+        description: 'Existing branch in THIS repository containing exact pinned oreslang-source.java Git tree'
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  fixture-audit:
+    name: Fixture and contract audit (NOT runtime tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell syntax
+        run: bash -n scripts/test.sh
+      - name: Rust audit unit tests
+        run: cargo test --offline --locked --manifest-path tools/audit/Cargo.toml
+      - name: Verify source pins, fixtures, and OTP matrix
+        run: cargo run --offline --locked --quiet --manifest-path tools/audit/Cargo.toml
+
+  runtime-integration:
+    name: Real pinned GraalVM source integration
+    if: github.event_name == 'workflow_dispatch'
+    needs: fixture-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout test suite
+        uses: actions/checkout@v4
+        with:
+          path: suite
+          persist-credentials: false
+      - name: Checkout exact-source mirror in this repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_mirror_ref }}
+          path: oreslang-source.java
+          persist-credentials: false
+      - name: Install GraalVM JDK 25 and Maven cache
+        uses: actions/setup-java@v4
+        with:
+          distribution: graalvm
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: |
+            suite/pom.xml
+            oreslang-source.java/pom.xml
+      - name: Verify source identity and run actual integration tests
+        working-directory: suite
+        env:
+          ORESLANG_SOURCE_DIR: ${{ github.workspace }}/oreslang-source.java
+        run: bash scripts/test.sh
+      - name: Upload JUnit failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hot-loading-junit-reports
+          path: suite/target/surefire-reports/
+          if-no-files-found: ignore
