@@ -1,0 +1,6 @@
+// Deterministic startup failure used for rollback-gating tests.
+pub routine main(): void {
+  val numbers = arr[1];
+  val invalid = numbers[99];
+  return;
+}
