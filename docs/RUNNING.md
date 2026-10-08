@@ -20,10 +20,12 @@ The private source is **not** downloadable via a sibling repo's default `GITHUB_
 | --- | --- | --- |
 | Stage/start/retire/close | HotLoadingBaselineTest | Atomic promotion, durable routing |
 | Parse, capabilities, quotas, digest | HotLoadingBaselineTest | Formal sandbox or physical per-actor isolation |
-| Isolated/shared/untrusted actor lifecycle | HotLoadingActorTest | Cross-generation live actor mailboxes, production draining |
+| Isolated/shared/untrusted actor lifecycle and upgrade edge cases | HotLoadingActorTest; HotLoadingUpgradeEdgeCasesTest (12 additional) | Cross-generation live actor mailboxes, production draining |
 | Host-side epoch/canary fallback demonstration | HostReleaseCoordinatorTest | Runtime-owned supervisor or stable actor-router API |
 | Desired atomic activation semantics | PendingRuntimeContractTest (six disabled/red regressions) | Must implement source runtime before enabling |
 | OTP supervisor/link/monitor/release system | See OTP_UPGRADE_MATRIX.md | Not yet implemented or tested |
+
+**Total declared enabled Java tests: 43 (16 baseline + 7 actors + 12 upgrade edge cases + 8 host-only). Six pending regressions remain disabled.** These counts are inventories, not a report of successful JVM execution.
 
 **Disabled tests are never counted as passes.** JIT execution in a JVM is not evidence of an AOT native executable test, and profile capability getters are not native-image runtime verification. The source is a private repository: this repo intentionally does not hardcode credentials, copy source code, or declare GitHub Actions green without source admission.
 

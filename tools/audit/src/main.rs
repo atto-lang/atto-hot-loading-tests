@@ -13,6 +13,8 @@ const FIXTURES: &[(&str, &str)] = &[
     ("untrusted-actor.ores", "define untrusted actor Worker as"),
     ("crash-on-start.ores", "val invalid = numbers[99];"),
     ("actor-async-crash.ores", "define isoactor Counter as"),
+    ("two-ticks-v1.ores", "define isoactor Counter as"),
+    ("two-ticks-v2.ores", "define isoactor Counter as"),
 ];
 
 fn read(root: &Path, path: &str) -> Result<String, String> {
@@ -80,6 +82,7 @@ fn check(root: &Path) -> Result<(), String> {
     let classes = [
         ("HotLoadingBaselineTest.java", 16),
         ("HotLoadingActorTest.java", 7),
+        ("HotLoadingUpgradeEdgeCasesTest.java", 12),
         ("HostReleaseCoordinatorTest.java", 8),
         ("PendingRuntimeContractTest.java", 6),
     ];

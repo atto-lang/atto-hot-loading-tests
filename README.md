@@ -5,10 +5,13 @@
 ## What is included
 
 - **16 baseline tests** for `HotReloadManager` staging, no-run-before-start, once-only entrypoint, SHA-256, independent guest contexts, multiple code units, retention/retirement, cleanup, capability admission, and hostile source limits.
-- **7 executable actor scenarios** exercising actual Oreslang source fixtures: isolated actors (v1 and v2), shared actors, untrusted actors, startup failure containment, and multiple independently retired units.
+- **7 original executable actor scenarios, plus 12 upgrade edge-case tests** exercising actual Oreslang source fixtures: isolated actors (v1 and v2), shared actors, untrusted actors, startup failure containment, and multiple independently retired units.
+- **12 more real-runtime edge cases** in `HotLoadingUpgradeEdgeCasesTest` (two-turn actor mailboxes in distinct code versions; malformed replacement admission; version IDs; retire isolation; per-unit routing; quota recovery). All use the pinned Graal/Oreslang implementation, not a fake interpreter.
 - **8 trusted-host release-controller tests** for canary/epoch/fallback/drain *as a test-only proof*, not an assertion that the actual runtime has OTP supervisors.
 - **6 disabled failing-contract regression gates**, which must be enabled when atomic runtime activation and rollback are implemented. Disabled cases are *not* green.
 - **45 OTP parity scenarios** specifying required future behavior for supervision, release upgrades, message ABI, migration, links, monitors, distributed actor fencing, multi-generation memory safety, and JIT/AOT parity.
+
+The 12 new tests are **source-backed, not yet executed in CI**; two-message guest fixtures deliberately assert the actual values from each mailbox turn. Passing `start()` alone is not a substitute for actual async completion; the existing async negative control remains required. These do not prove runtime-owned OTP supervision or migration.
 
 ## Getting started
 
