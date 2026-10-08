@@ -58,9 +58,9 @@ fn check(root: &Path) -> Result<(), String> {
 
     let docs = read(root, "docs/OTP_UPGRADE_MATRIX.md")?;
     let numbers = matrix_numbers(&docs)?;
-    let expected: BTreeSet<u32> = (1..=30).collect();
+    let expected: BTreeSet<u32> = (1..=45).collect();
     if numbers != expected {
-        return Err(format!("OTP matrix must include unique contiguous H01..H30; found: {numbers:?}"));
+        return Err(format!("OTP matrix must include unique contiguous H01..H45; found: {numbers:?}"));
     }
     if !docs.contains("Pending") {
         return Err("OTP matrix must document pending implementation status".to_string());
