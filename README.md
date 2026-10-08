@@ -8,7 +8,7 @@
 - **7 executable actor scenarios** exercising actual Oreslang source fixtures: isolated actors (v1 and v2), shared actors, untrusted actors, startup failure containment, and multiple independently retired units.
 - **8 trusted-host release-controller tests** for canary/epoch/fallback/drain *as a test-only proof*, not an assertion that the actual runtime has OTP supervisors.
 - **6 disabled failing-contract regression gates**, which must be enabled when atomic runtime activation and rollback are implemented. Disabled cases are *not* green.
-- **30 OTP parity scenarios** specifying required future behavior for supervision, release upgrades, message ABI, migration, links, monitors, distributed actor fencing, multi-generation memory safety, and JIT/AOT parity.
+- **45 OTP parity scenarios** specifying required future behavior for supervision, release upgrades, message ABI, migration, links, monitors, distributed actor fencing, multi-generation memory safety, and JIT/AOT parity.
 
 ## Getting started
 
