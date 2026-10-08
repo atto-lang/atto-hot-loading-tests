@@ -83,4 +83,21 @@ final class PendingRuntimeContractTest {
         }
     }
 
+    @Test
+    @Disabled("Not implemented: atomic activation must validate public ABI compatibility or demand an explicit typed adapter")
+    void incompatiblePublicAbiMustNotReplaceServingVersion() {
+        var compiler = new dev.oreslang.compiler.IncrementalCompiler();
+        var v1 = compiler.compile(java.util.Map.of("service.ores",
+                "pub routine main(): void { return; }")).units().get("service.ores");
+        var v2 = compiler.compile(java.util.Map.of("service.ores",
+                "pub routine main(): void { return; } pub routine added(): void { return; }"))
+                .units().get("service.ores");
+        assertNotEquals(v1.abiDigest(), v2.abiDigest());
+        try (var manager = new HotReloadManager(IsolatePolicy.developer(), ExecutionProfile.serverJit())) {
+            var healthy = manager.load(v1);
+            assertThrows(IllegalStateException.class, () -> manager.load(v2));
+            assertSame(healthy, manager.active("service.ores"));
+        }
+    }
+
 }

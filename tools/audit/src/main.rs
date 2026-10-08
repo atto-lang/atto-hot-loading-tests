@@ -83,8 +83,9 @@ fn check(root: &Path) -> Result<(), String> {
         ("HotLoadingBaselineTest.java", 16),
         ("HotLoadingActorTest.java", 7),
         ("HotLoadingUpgradeEdgeCasesTest.java", 12),
+        ("HotLoadingStaticAbiTest.java", 8),
         ("HostReleaseCoordinatorTest.java", 8),
-        ("PendingRuntimeContractTest.java", 6),
+        ("PendingRuntimeContractTest.java", 7),
     ];
     for &(file, min_cases) in &classes {
         let source = read(root, &format!("src/test/java/dev/oreslang/hotreload/{file}"))?;
