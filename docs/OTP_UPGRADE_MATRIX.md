@@ -47,6 +47,22 @@ Status: **baseline generational hot loader exists; OTP release handling and runt
 | H29 | Upgrade notifications and observer streams | Sequenced, bounded, typed lifecycle events | Pending |
 | H30 | Typed actor request/reply through upgrade | Correlation, cancellation, duplicate reply and ABI admission | Pending |
 
+| H31 | Typed GenServer-style `call` vs `cast` | Request timeout, reply correlation, idempotency, and cast fire-and-forget semantics remain distinct | Pending |
+| H32 | GenStateMachine-style event/state transition | Typed exhaustive states, deferred events, enter/exit hooks; generation change preserves explicit state contract | Pending |
+| H33 | GenEvent-style handler subscription / upgrade | Handler attach/remove/upgrade never exposes mutable manager memory or drops acknowledged event | Pending |
+| H34 | DynamicSupervisor child install/removal | Typed child-spec update is transactional, capacity-bounded, with no orphaned actors | Pending |
+| H35 | Application controller / dependency graph release | Dependency-ordered start; reversed stop; on_failure escalation; release manifests pin exact code units | Pending |
+| H36 | Selective-receive parity and mailbox fairness | If selective receive is offered, skipped mail cannot grow unbounded or violate per-sender ordering | Pending |
+| H37 | Process registry and stable service names | Atomic register/whereis/unregister across replacement; stale service handles fenced | Pending |
+| H38 | Timer ownership across code upgrade | Scheduled messages, monotonic deadlines and cancellation are bound to a generation or explicitly transferred | Pending |
+| H39 | Erlang-style code_change bridge | Typed, versioned migration callback never runs after traffic switch without a valid rollback plan | Pending |
+| H40 | Soft purge versus forced purge of old code | Soft purge refuses while old actors run; forced purge explicitly cancels with observable exit reason | Pending |
+| H41 | Process-local storage semantics | Private process state stays actor-local; no invisible mutable state leak through threads/Truffle contexts | Pending |
+| H42 | ETS-like shared table lifetime | Typed capability, owner/heir policy, concurrency guarantees and table migration are explicit | Pending |
+| H43 | Mnesia-like durable state / transactional upgrade | Snapshot consistency, schema evolution, fencing and idempotent recovery across supervisor restarts | Pending |
+| H44 | Distributed node upgrade under split brain | Handshake versions, session epochs, stale node IDs and disconnection are bounded and fail closed | Pending |
+| H45 | Release bundle integrity and downgrade | Signed/content-addressed manifest, ABI compatibility, explicit downgrade/migration rules and provenance checks | Pending |
+
 ## Suggested runtime API (proposal only)
 
 ```text
