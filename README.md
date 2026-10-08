@@ -1,6 +1,6 @@
 # Oreslang hot-loading & OTP-style supervision conformance
 
-**Status: initial draft, real-JVM integration suite written but not yet executed against the pinned private source runtime.** This repo intentionally distinguishes existing generation APIs from the OTP-like supervisor/release capabilities Oreslang still needs.
+**Status: audited draft, source-backed JUnit integration not yet verified because GitHub Actions has not allocated a runner.** This repo intentionally distinguishes existing generation APIs from the OTP-like supervisor/release capabilities Oreslang still needs.
 
 ## What is included
 
@@ -30,3 +30,7 @@ Requires Maven and JDK 21+ (GraalVM JDK 25 preferred). The script verifies the e
 Today, `HotReloadManager.load()` updates its `active` pointer *before* the staged generation starts. A failing start closes the generation but does **not** roll back that pointer or remove it from its registry. This is unsafe to use directly as a production route switch; the draft tests document the behavior and include explicit disabled regression tests for the desired atomic protocol.
 
 **Execution models:** JIT may optimize immutable code images, but it must not create new guest-visible class/module/actor types at runtime. Native AOT still loads vetted guest source/IR through the already-compiled interpreter; guest JIT acceleration is an optimization, not a semantic dependency. Production isolated-actor hot upgrades are the first priority, then supervised subtrees/shared actors, and finally distributed OTP-like releases.
+
+## GitHub Actions admission
+
+The `.github/workflows/conformance.yml` workflow runs a Rust-only fixture inventory followed by **required source-backed Maven/GraalVM integration**. The latter checks out branch `validation/source-9d189677` **from this same repository**, or an explicitly supplied source-mirror ref on manual dispatch. The source mirror must already contain the entire pinned source Git tree (not just the harness), with exact `SOURCE_TREE_REF` identity. If no mirror exists, integration **fails closed**; a green fixture-audit result alone is never enough to merge. Zero-step GitHub Actions failures are runner/admission failures, not source-code test outcomes.
