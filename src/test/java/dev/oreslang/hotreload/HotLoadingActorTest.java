@@ -98,6 +98,16 @@ final class HotLoadingActorTest {
         }
     }
 
+    @Test
+    void guestAsyncMainFailureAfterActualMailboxReplyMustReachHost() throws Exception {
+        try (var manager = new HotReloadManager(IsolatePolicy.developer(), JIT)) {
+            var candidate = manager.load("async-crash.ores", fixture("actor-async-crash.ores"));
+            assertThrows(RuntimeException.class, candidate::start,
+                    "A returned Future is not proof that async actor work completed");
+            assertTrue(candidate.closed());
+        }
+    }
+
     private static String fixture(String name) throws Exception {
         try (InputStream input = HotLoadingActorTest.class.getResourceAsStream("/ores/" + name)) {
             assertNotNull(input, "fixture not packaged: " + name);
