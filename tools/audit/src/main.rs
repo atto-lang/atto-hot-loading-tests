@@ -80,7 +80,7 @@ fn check(root: &Path) -> Result<(), String> {
     let classes = [
         ("HotLoadingBaselineTest.java", 16),
         ("HotLoadingActorTest.java", 7),
-        ("HostReleaseCoordinatorTest.java", 6),
+        ("HostReleaseCoordinatorTest.java", 8),
         ("PendingRuntimeContractTest.java", 6),
     ];
     for &(file, min_cases) in &classes {
