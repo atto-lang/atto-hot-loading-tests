@@ -46,7 +46,6 @@ Status: **baseline generational hot loader exists; OTP release handling and runt
 | H28 | Repeated upgrades / resource leak soak | Contexts, class images, threads, file descriptors, timers reclaim | Pending |
 | H29 | Upgrade notifications and observer streams | Sequenced, bounded, typed lifecycle events | Pending |
 | H30 | Typed actor request/reply through upgrade | Correlation, cancellation, duplicate reply and ABI admission | Pending |
-
 | H31 | Typed GenServer-style `call` vs `cast` | Request timeout, reply correlation, idempotency, and cast fire-and-forget semantics remain distinct | Pending |
 | H32 | GenStateMachine-style event/state transition | Typed exhaustive states, deferred events, enter/exit hooks; generation change preserves explicit state contract | Pending |
 | H33 | GenEvent-style handler subscription / upgrade | Handler attach/remove/upgrade never exposes mutable manager memory or drops acknowledged event | Pending |
