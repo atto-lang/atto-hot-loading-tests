@@ -31,7 +31,8 @@ jobs:
 
   runtime-integration:
     name: Real pinned GraalVM source integration
-    if: github.event_name == 'workflow_dispatch'
+    # Always gate PRs and pushes on actual source-backed integration.
+    # An unavailable mirror is a hard validation blocker, never a green skip.
     needs: fixture-audit
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -44,7 +45,7 @@ jobs:
       - name: Checkout exact-source mirror in this repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_mirror_ref }}
+          ref: ${{ inputs.source_mirror_ref || 'validation/source-9d189677' }}
           path: oreslang-source.java
           persist-credentials: false
       - name: Install GraalVM JDK 25 and Maven cache
