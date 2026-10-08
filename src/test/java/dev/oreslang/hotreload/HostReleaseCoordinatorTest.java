@@ -5,6 +5,9 @@ import dev.oreslang.runtime.HotReloadManager;
 import dev.oreslang.runtime.IsolatePolicy;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -108,6 +111,57 @@ final class HostReleaseCoordinatorTest {
         host.close();
         assertTrue(first.generation.closed());
         assertTrue(next.generation.closed());
+    }
+
+    @Test
+    void twoConcurrentPromotionAttemptsHaveExactlyOneWinner() throws Exception {
+        try (var host = new HostCoordinator()) {
+            assertTrue(host.promote(host.stage("service.ores", GOOD), 0));
+            var first = host.stage("service.ores", GOOD);
+            var second = host.stage("service.ores", GOOD);
+            var ready = new CountDownLatch(2);
+            var release = new CountDownLatch(1);
+
+            try (var pool = Executors.newFixedThreadPool(2)) {
+                var left = pool.submit(() -> {
+                    ready.countDown();
+                    if (!release.await(10, TimeUnit.SECONDS)) {
+                        throw new AssertionError("promotion barrier did not release");
+                    }
+                    return host.promote(first, 1);
+                });
+                var right = pool.submit(() -> {
+                    ready.countDown();
+                    if (!release.await(10, TimeUnit.SECONDS)) {
+                        throw new AssertionError("promotion barrier did not release");
+                    }
+                    return host.promote(second, 1);
+                });
+
+                assertTrue(ready.await(10, TimeUnit.SECONDS));
+                release.countDown();
+                boolean a = left.get(15, TimeUnit.SECONDS);
+                boolean b = right.get(15, TimeUnit.SECONDS);
+                assertNotEquals(a, b, "exactly one candidate may win the epoch");
+                assertEquals(2, host.epoch());
+                assertEquals(2, host.manager.liveGenerations(),
+                        "previous serving version and one successful candidate stay live");
+            }
+        }
+    }
+
+    @Test
+    void consumedCandidateCannotBePromotedTwiceOrReusedAfterAbandon() {
+        try (var host = new HostCoordinator()) {
+            var first = host.stage("service.ores", GOOD);
+            assertTrue(host.promote(first, 0));
+            assertThrows(IllegalArgumentException.class, () -> host.promote(first, 1));
+
+            var second = host.stage("service.ores", GOOD);
+            host.abandon(second);
+            assertThrows(IllegalArgumentException.class, () -> host.promote(second, 1));
+            assertEquals(1, host.epoch());
+        }
     }
 
     private static final class HostCoordinator implements AutoCloseable {
