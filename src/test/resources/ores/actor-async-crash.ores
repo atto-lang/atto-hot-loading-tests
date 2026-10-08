@@ -1,0 +1,22 @@
+// Required negative control: async main must not report success before its
+// actor mailbox response and subsequent guest failure have been observed.
+define isoactor Counter as
+  receive(ActorMail<String> mail): void {
+    self.send(1);
+    self.end();
+    return;
+  }
+end
+
+pub async routine main(): void {
+  val worker = spawn Counter();
+  await worker.ready;
+  worker.send("tick");
+  val response = (await worker.outputs.next()).value.unwrap();
+  if response.value == 1; do
+    val numbers = arr[1];
+    val invalid = numbers[99];
+  fi
+  await worker.done;
+  return;
+}
