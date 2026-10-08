@@ -1,0 +1,38 @@
+// Two actors of one shared code image must not share mutable actor fields.
+define actor Counter as
+  let int count;
+
+  on_start(): void {
+    self.count = 0;
+    return;
+  }
+
+  receive(ActorMail<String> mail): void {
+    self.count = self.count + 1;
+    self.send(self.count);
+    self.end();
+    return;
+  }
+end
+
+pub async routine main(): void {
+  val left = spawn Counter();
+  val right = spawn Counter();
+  await left.ready;
+  await right.ready;
+  left.send("tick");
+  right.send("tick");
+  val leftOutput = (await left.outputs.next()).value.unwrap();
+  val rightOutput = (await right.outputs.next()).value.unwrap();
+  if leftOutput.value != 1; do
+    val numbers = arr[1];
+    val invalid = numbers[99];
+  fi
+  if rightOutput.value != 1; do
+    val numbers = arr[1];
+    val invalid = numbers[99];
+  fi
+  await left.done;
+  await right.done;
+  return;
+}
