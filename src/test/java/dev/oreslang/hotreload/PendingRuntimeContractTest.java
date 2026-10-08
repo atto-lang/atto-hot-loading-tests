@@ -54,4 +54,33 @@ final class PendingRuntimeContractTest {
             assertNull(manager.active("service.ores"));
         }
     }
+    @Test
+    @Disabled("Not implemented: child guest capability set must be a subset of its supervisor's authority")
+    void hotLoadManagerMustRejectCapabilityEscalationAtConstruction() {
+        var supervisor = IsolatePolicy.developer();
+        var escalatedGuest = supervisor.withCapabilities(IsolatePolicy.Capability.NATIVE);
+        assertThrows(SecurityException.class,
+                () -> new HotReloadManager(supervisor, escalatedGuest, ExecutionProfile.serverJit()));
+    }
+
+    @Test
+    @Disabled("Not implemented: manager.close must permanently seal load/activation APIs")
+    void closedManagerMustRejectFutureGenerationLoads() {
+        var manager = new HotReloadManager(IsolatePolicy.developer(), ExecutionProfile.serverJit());
+        manager.close();
+        assertThrows(IllegalStateException.class,
+                () -> manager.load("post-close.ores", GOOD));
+        assertEquals(0, manager.liveGenerations());
+    }
+
+    @Test
+    @Disabled("Not implemented: explicit Generation.close must not leave a closed active generation routable")
+    void activeGenerationMustNeverPointToAClosedContext() {
+        try (var manager = new HotReloadManager(IsolatePolicy.developer(), ExecutionProfile.serverJit())) {
+            var generation = manager.loadAndStart("service.ores", GOOD);
+            generation.close();
+            assertNull(manager.active("service.ores"));
+        }
+    }
+
 }
