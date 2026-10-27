@@ -38,6 +38,8 @@ cargo run --manifest-path tools/rollout-evidence/Cargo.toml --offline --locked -
 cargo run --manifest-path tools/rollout-evidence/Cargo.toml --offline --locked -- receipt.tsv EXPECTED_COMMIT EXPECTED_TREE EXPECTED_CORPUS_SHA256
 ```
 
+The input path is required to refer to a regular non-symlink file; device nodes, pipes, directories and symbolic links are rejected before reading. The file descriptor is rechecked after opening, but these host-local checks do not eliminate every filesystem rename race or constitute sandbox security.
+
 The receipt is canonical ASCII/LF TSV, at most 1 MiB, with this exact header:
 
 ```text
