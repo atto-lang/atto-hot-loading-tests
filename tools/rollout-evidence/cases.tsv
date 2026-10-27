@@ -1,0 +1,4 @@
+generation-routing	java	execution
+physical-quiescence	java	execution
+rollback-supervision	java	execution
+negative-admission	java	rejection
