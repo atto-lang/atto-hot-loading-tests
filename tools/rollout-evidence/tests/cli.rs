@@ -84,3 +84,35 @@ fn cli_accepts_only_consistent_synthetic_metadata() {
     let skipped = text.replace("\tpass\t", "\tskipped\t");
     assert!(!Receipt::new(skipped.as_bytes()).inspect().status.success());
 }
+
+#[test]
+fn cli_rejects_directory_before_bounded_read() {
+    let output = cli()
+        .arg(std::env::temp_dir())
+        .args(["1".repeat(40), "2".repeat(40), "3".repeat(64)])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("regular non-symlink file"));
+}
+
+#[cfg(unix)]
+#[test]
+fn cli_rejects_symlink_to_receipt_before_open() {
+    use std::os::unix::fs::symlink;
+    let target = Receipt::new(b"does-not-matter");
+    let link = std::env::temp_dir().join(format!(
+        "ores-receipt-link-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    symlink(&target.0, &link).unwrap();
+    let output = cli()
+        .arg(&link)
+        .args(["1".repeat(40), "2".repeat(40), "3".repeat(64)])
+        .output()
+        .unwrap();
+    std::fs::remove_file(&link).unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("regular non-symlink file"));
+}
