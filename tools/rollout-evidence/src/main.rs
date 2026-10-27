@@ -100,7 +100,17 @@ fn run() -> Result<(), String> {
             "usage: ores-rollout-evidence RECEIPT.tsv COMMIT TREE CORPUS_SHA256; or --cases".into(),
         );
     }
+    // Never open devices, pipes or symlinks as a receipt. A FIFO could
+    // otherwise indefinitely block before the 1 MiB streaming cap applies.
+    // This is a host-local preflight, not a race-free security sandbox.
+    let entry = std::fs::symlink_metadata(&args[0]).map_err(|e| e.to_string())?;
+    if !entry.file_type().is_file() {
+        return Err("receipt must be a regular non-symlink file".into());
+    }
     let file = std::fs::File::open(&args[0]).map_err(|e| e.to_string())?;
+    if !file.metadata().map_err(|e| e.to_string())?.is_file() {
+        return Err("opened receipt must remain a regular file".into());
+    }
     let mut bytes = Vec::new();
     file.take(LIMIT + 1)
         .read_to_end(&mut bytes)
