@@ -298,6 +298,27 @@ mod tests {
             assert!(check(&text, CASES).is_err());
         }
     }
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn open_receipt_itself_refuses_symlink_without_preflight() {
+        use std::os::unix::fs::symlink;
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        let unique = format!(
+            "ores-open-receipt-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        );
+        let target = std::env::temp_dir().join(&unique);
+        let alias = std::env::temp_dir().join(format!("{unique}-link"));
+        std::fs::write(&target, b"ignored").unwrap();
+        symlink(&target, &alias).unwrap();
+        let opened = open_receipt(alias.to_str().unwrap());
+        std::fs::remove_file(&alias).unwrap();
+        std::fs::remove_file(&target).unwrap();
+        assert!(opened.is_err(), "open without O_NOFOLLOW followed a symlink");
+    }
+
     #[test]
     fn canonical_receipt_requires_terminal_lf_and_printable_bytes() {
         let valid = receipt(CASES);
