@@ -40,7 +40,16 @@ cargo run --manifest-path tools/rollout-evidence/Cargo.toml --offline --locked -
 
 The input path is required to refer to a regular non-symlink file; device nodes, pipes, directories and symbolic links are rejected before reading. The file descriptor is rechecked after opening, but these host-local checks do not eliminate every filesystem rename race or constitute sandbox security.
 
-The receipt is canonical ASCII/LF TSV, at most 1 MiB, with this exact header:
+The input must be a regular, non-symlink file. Linux uses
+`O_NOFOLLOW|O_NONBLOCK` in addition to the path preflight and opened-inode
+check, preventing a path-swap into a symlink or blocking FIFO at open time.
+Other platforms retain regular-file and opened-descriptor checks but cannot
+claim the same race safety. This remains a local input-safety measure, not
+authenticated evidence or a filesystem sandbox.
+
+The receipt must end with LF, contain only printable ASCII plus literal TAB/LF,
+and be at most 1 MiB. CR, NUL, DEL, other control bytes, and missing final
+LF are rejected. The receipt is canonical ASCII/LF TSV with this exact header:
 
 ```text
 repository	suite	backend	phase	outcome	commit	tree	corpus_sha256	run_id	job_id	steps	tests	exit_code	artifact_sha256
