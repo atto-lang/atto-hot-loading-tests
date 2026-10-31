@@ -137,7 +137,20 @@ fn cli_rejects_named_fifo_without_opening_or_blocking() {
 }
 
 #[test]
-fn cli_rejects_receipt_without_final_lf() {
-    let output = Receipt::new(b"repository\tsuite\tbackend\tphase").inspect();
-    assert!(!output.status.success());
+fn cli_rejects_otherwise_valid_receipt_without_final_lf() {
+    let mut text = String::from(
+        "repository\tsuite\tbackend\tphase\toutcome\tcommit\ttree\tcorpus_sha256\trun_id\tjob_id\tsteps\ttests\texit_code\tartifact_sha256\n",
+    );
+    for row in CASES.lines().filter(|row| !row.starts_with('#')) {
+        text.push_str(&format!(
+            "{REPOSITORY}\t{row}\tpass\t{}\t{}\t{}\t1\t2\t3\t4\t0\t{}\n",
+            "1".repeat(40),
+            "2".repeat(40),
+            "3".repeat(64),
+            "4".repeat(64)
+        ));
+    }
+    assert!(Receipt::new(text.as_bytes()).inspect().status.success());
+    text.pop(); // Remove only the terminal LF from an otherwise accepted receipt.
+    assert!(!Receipt::new(text.as_bytes()).inspect().status.success());
 }
