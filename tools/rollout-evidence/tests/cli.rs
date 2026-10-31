@@ -116,3 +116,28 @@ fn cli_rejects_symlink_to_receipt_before_open() {
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("regular non-symlink file"));
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn cli_rejects_named_fifo_without_opening_or_blocking() {
+    let fifo = std::env::temp_dir().join(format!(
+        "ores-receipt-fifo-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    assert!(Command::new("mkfifo").arg(&fifo).status().unwrap().success());
+    let output = cli()
+        .arg(&fifo)
+        .args(["1".repeat(40), "2".repeat(40), "3".repeat(64)])
+        .output()
+        .unwrap();
+    std::fs::remove_file(&fifo).unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("regular non-symlink file"));
+}
+
+#[test]
+fn cli_rejects_receipt_without_final_lf() {
+    let output = Receipt::new(b"repository\tsuite\tbackend\tphase").inspect();
+    assert!(!output.status.success());
+}
