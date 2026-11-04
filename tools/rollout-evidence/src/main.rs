@@ -53,7 +53,9 @@ fn inspect(
     }
     if text.len() as u64 > LIMIT
         || !text.ends_with('\n')
-        || !text.bytes().all(|b| b == b'\n' || b == b'\t' || (0x20..=0x7e).contains(&b))
+        || !text
+            .bytes()
+            .all(|b| b == b'\n' || b == b'\t' || (0x20..=0x7e).contains(&b))
     {
         return Err("receipt must be bounded canonical ASCII/LF TSV".into());
     }
@@ -316,7 +318,10 @@ mod tests {
         let opened = open_receipt(alias.to_str().unwrap());
         std::fs::remove_file(&alias).unwrap();
         std::fs::remove_file(&target).unwrap();
-        assert!(opened.is_err(), "open without O_NOFOLLOW followed a symlink");
+        assert!(
+            opened.is_err(),
+            "open without O_NOFOLLOW followed a symlink"
+        );
     }
 
     #[test]

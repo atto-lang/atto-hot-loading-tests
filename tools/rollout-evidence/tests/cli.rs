@@ -125,7 +125,11 @@ fn cli_rejects_named_fifo_without_opening_or_blocking() {
         std::process::id(),
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));
-    assert!(Command::new("mkfifo").arg(&fifo).status().unwrap().success());
+    assert!(Command::new("mkfifo")
+        .arg(&fifo)
+        .status()
+        .unwrap()
+        .success());
     let output = cli()
         .arg(&fifo)
         .args(["1".repeat(40), "2".repeat(40), "3".repeat(64)])
