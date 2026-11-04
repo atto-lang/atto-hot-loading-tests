@@ -51,7 +51,12 @@ fn inspect(
     if !digest(commit, 40) || !digest(tree, 40) || !digest(corpus, 64) {
         return Err("expected pins must be nonzero lowercase full digests".into());
     }
-    if text.len() as u64 > LIMIT || !text.is_ascii() || text.contains('\r') {
+    if text.len() as u64 > LIMIT
+        || !text.ends_with('\n')
+        || !text
+            .bytes()
+            .all(|b| b == b'\n' || b == b'\t' || (0x20..=0x7e).contains(&b))
+    {
         return Err("receipt must be bounded canonical ASCII/LF TSV".into());
     }
     let expected = manifest(cases)?;
@@ -89,6 +94,23 @@ fn inspect(
     Ok(seen.len())
 }
 
+// On Linux, O_NOFOLLOW closes the symlink-swap window after lstat, while
+// O_NONBLOCK prevents a raced replacement with a FIFO from hanging on open.
+// These Linux flag values are stable in the kernel ABI; other platforms still
+// enforce the preflight/descriptor checks but do not claim race freedom.
+fn open_receipt(path: &str) -> Result<std::fs::File, String> {
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(target_os = "linux")]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        const O_NONBLOCK: i32 = 0o4000;
+        const O_NOFOLLOW: i32 = 0o400000;
+        options.custom_flags(O_NONBLOCK | O_NOFOLLOW);
+    }
+    options.open(path).map_err(|e| e.to_string())
+}
+
 fn run() -> Result<(), String> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     if args.as_slice() == ["--cases"] {
@@ -100,7 +122,28 @@ fn run() -> Result<(), String> {
             "usage: ores-rollout-evidence RECEIPT.tsv COMMIT TREE CORPUS_SHA256; or --cases".into(),
         );
     }
-    let file = std::fs::File::open(&args[0]).map_err(|e| e.to_string())?;
+    // Never open devices, pipes or symlinks as a receipt. A FIFO could
+    // otherwise indefinitely block before the 1 MiB streaming cap applies.
+    // This is local path hardening, not receipt authentication.
+    let entry = std::fs::symlink_metadata(&args[0]).map_err(|e| e.to_string())?;
+    if !entry.file_type().is_file() {
+        return Err("receipt must be a regular non-symlink file".into());
+    }
+    if entry.len() > LIMIT {
+        return Err("receipt exceeds 1 MiB".into());
+    }
+    let file = open_receipt(&args[0])?;
+    let opened = file.metadata().map_err(|e| e.to_string())?;
+    if !opened.is_file() {
+        return Err("opened receipt must remain a regular file".into());
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if entry.dev() != opened.dev() || entry.ino() != opened.ino() {
+            return Err("receipt changed between preflight and open".into());
+        }
+    }
     let mut bytes = Vec::new();
     file.take(LIMIT + 1)
         .read_to_end(&mut bytes)
@@ -257,6 +300,40 @@ mod tests {
             assert!(check(&text, CASES).is_err());
         }
     }
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn open_receipt_itself_refuses_symlink_without_preflight() {
+        use std::os::unix::fs::symlink;
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        let unique = format!(
+            "ores-open-receipt-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        );
+        let target = std::env::temp_dir().join(&unique);
+        let alias = std::env::temp_dir().join(format!("{unique}-link"));
+        std::fs::write(&target, b"ignored").unwrap();
+        symlink(&target, &alias).unwrap();
+        let opened = open_receipt(alias.to_str().unwrap());
+        std::fs::remove_file(&alias).unwrap();
+        std::fs::remove_file(&target).unwrap();
+        assert!(
+            opened.is_err(),
+            "open without O_NOFOLLOW followed a symlink"
+        );
+    }
+
+    #[test]
+    fn canonical_receipt_requires_terminal_lf_and_printable_bytes() {
+        let valid = receipt(CASES);
+        assert!(check(valid.strip_suffix('\n').unwrap(), CASES).is_err());
+        for control in ['\u{000b}', '\u{001b}', '\u{007f}'] {
+            let malformed = valid.replace("pass", &format!("pa{control}ss"));
+            assert!(check(&malformed, CASES).is_err(), "control: {control:?}");
+        }
+    }
+
     #[test]
     fn header_and_column_count_are_strict() {
         let cases = "sample\tjava\texecution\n";
