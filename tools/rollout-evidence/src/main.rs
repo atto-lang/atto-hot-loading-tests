@@ -96,8 +96,11 @@ fn inspect(
 
 // On Linux, O_NOFOLLOW closes the symlink-swap window after lstat, while
 // O_NONBLOCK prevents a raced replacement with a FIFO from hanging on open.
-// These Linux flag values are stable in the kernel ABI; other platforms still
-// enforce the preflight/descriptor checks but do not claim race freedom.
+// O_NOFOLLOW's value differs by Linux architecture: on arm and powerpc the
+// generic 0o400000 means something else (O_LARGEFILE on arm64), which would
+// silently follow symlinks. Architectures without a verified value below fail
+// to build rather than lose the protection. Other platforms still enforce the
+// preflight/descriptor checks but do not claim race freedom.
 fn open_receipt(path: &str) -> Result<std::fs::File, String> {
     let mut options = std::fs::OpenOptions::new();
     options.read(true);
@@ -105,6 +108,9 @@ fn open_receipt(path: &str) -> Result<std::fs::File, String> {
     {
         use std::os::unix::fs::OpenOptionsExt;
         const O_NONBLOCK: i32 = 0o4000;
+        #[cfg(any(target_arch = "aarch64", target_arch = "arm"))]
+        const O_NOFOLLOW: i32 = 0o100000;
+        #[cfg(any(target_arch = "x86_64", target_arch = "x86", target_arch = "riscv64"))]
         const O_NOFOLLOW: i32 = 0o400000;
         options.custom_flags(O_NONBLOCK | O_NOFOLLOW);
     }
