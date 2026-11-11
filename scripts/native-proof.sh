@@ -3,6 +3,8 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 : "${JAVA_HOME:?Set JAVA_HOME to GraalVM with matching Truffle components}"
 "$JAVA_HOME/bin/native-image" --version
+: "${ORESLANG_SOURCE_DIR:?Set ORESLANG_SOURCE_DIR to the clean pinned compiler checkout}"
+bash "$root/scripts/test.sh"
 mvn -B -ntp -f "$root/pom.xml" -DskipTests package dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=target/runtime-classpath.txt
 cp_entries="$(cat "$root/target/runtime-classpath.txt")"
 "$JAVA_HOME/bin/native-image" --no-fallback -O1 --parallelism=4 -J-Xmx6g \

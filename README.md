@@ -31,7 +31,7 @@ bash scripts/test.sh
 Run the separate Native Image proof with matching Graal/Truffle components:
 
 ```sh
-JAVA_HOME=/path/to/matching/graalvm bash scripts/native-proof.sh
+JAVA_HOME=/path/to/matching/graalvm ORESLANG_SOURCE_DIR=/path/to/pinned/compiler bash scripts/native-proof.sh
 ```
 
 Native Image builds an AOT runtime/interpreter and runs loaded guest source
