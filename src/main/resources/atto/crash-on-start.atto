@@ -1,0 +1,7 @@
+fnc selector(): int { return 4; }
+pub routine main(): void {
+  const pair = tuple(1, 2);
+  const int index = selector();
+  const int value = pair[index];
+  return;
+}

@@ -1,0 +1,38 @@
+// Source-backed two-turn isolated actor conformance, v1.
+// main traps after any incorrect mailbox output or delivery order.
+define isoactor Counter as
+  let int count;
+
+  on_start(): void {
+    self.count = 0;
+    return;
+  }
+
+  receive(ActorMail<String> mail): void {
+    self.count = self.count + 1;
+    self.send(self.count);
+    if self.count == 2; do
+      self.end();
+    fi
+    return;
+  }
+end
+
+pub async routine main(): void {
+  val worker = spawn Counter();
+  await worker.get_ready();
+  worker.send("tick");
+  val first = (await worker.outputs.next()).value.unwrap();
+  if first.value != 1; do
+    val numbers = arr[1];
+    val invalid = numbers[99];
+  fi
+  worker.send("tick");
+  val second = (await worker.outputs.next()).value.unwrap();
+  if second.value != 2; do
+    val numbers = arr[1];
+    val invalid = numbers[99];
+  fi
+  await worker.get_done();
+  return;
+}

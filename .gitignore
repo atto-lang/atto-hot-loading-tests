@@ -1,0 +1,5 @@
+target/
+.ores/
+.idea/
+*.iml
+.DS_Store

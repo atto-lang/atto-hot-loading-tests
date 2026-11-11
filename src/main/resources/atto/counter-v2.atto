@@ -1,0 +1,50 @@
+// A request owns a stateful actor for two mailbox turns. Generation replacement
+// must preserve the old actor while its owning request awaits network I/O.
+define actor Counter as
+  let int count;
+  let int turns;
+  on_start(): void { self.count = 10; self.turns = 0; return; }
+  receive(ActorMail<int> mail): void {
+    self.count = self.count + 2;
+    self.turns = self.turns + 1;
+    self.send(self.count);
+    if self.turns == 2; do self.end(); fi
+    return;
+  }
+  @Implements
+  tear_down(): void { self.send(self.count + 1000); return; }
+end
+
+pub routine main(): void { return; }
+
+pub async routine request(port: int): int {
+  val worker = spawn Counter();
+  await worker.get_ready();
+  worker.send(port);
+  val firstStep = await worker.outputs.next();
+  if firstStep.done; do return -1; fi
+  val first = firstStep.value.unwrap();
+  // The request remains in flight and owns the live actor across this I/O wait.
+  // After cutover it sends a second message to the same old actor.
+  val socket = await network.connect("127.0.0.1", port);
+  val command = (await socket.read_line()).unwrap();
+  if command != "release"; do val invalid = arr[1][port]; fi
+  await socket.close();
+  worker.send(port);
+  val secondStep = await worker.outputs.next();
+  if secondStep.done; do return -2; fi
+  val second = secondStep.value.unwrap();
+  val cleanupStep = await worker.outputs.next();
+  if cleanupStep.done; do return -3; fi
+  val cleanup = cleanupStep.value.unwrap();
+  await worker.get_done();
+  val firstCount = first.value as int;
+  val secondCount = second.value as int;
+  val cleanupCount = cleanup.value as int;
+  if cleanupCount != secondCount + 1000; do
+    val invalid = arr[1][port];
+  fi
+  val terminal = await worker.outputs.next();
+  if terminal.done != true; do val invalid = arr[1][port]; fi
+  return firstCount * 100 + secondCount;
+}

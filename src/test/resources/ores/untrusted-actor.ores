@@ -1,0 +1,15 @@
+// Sandbox actor creation from a trusted generation.
+define untrusted actor Worker as
+  receive(ActorMail<String> mail): void {
+    self.end();
+    return;
+  }
+end
+
+pub async routine main(): void {
+  val worker = spawn Worker();
+  await worker.get_ready();
+  worker.send("stop");
+  await worker.get_done();
+  return;
+}
