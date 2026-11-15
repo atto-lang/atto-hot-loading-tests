@@ -25,3 +25,15 @@ This README documents intended scope; current conformance must be established fr
 
 - [AttoLang](https://github.com/atto-lang)
 - [Platform conformance](https://github.com/atto-lang/atto-platform-conformance)
+
+## Repository ownership and contribution routing
+
+**Belongs here:** Conformance cases for module/actor hot-load, migration, quiescence, rollback, generation fencing and stale-reference rejection.
+
+**Belongs elsewhere:** Hot-loading implementation belongs in respective atto-source.* backends; normative policy in atto-spec.
+
+**Security and portability boundary:** Test concurrent live upgrades, cancellation and rollback under quotas; preserve stable ActorRef while rejecting stale generation and untrusted module capabilities.
+
+AttoLang is the public name; preserve existing Oreslang/.ores compatibility and use canonical .atto for new portable library source. This README defines scope, not feature readiness.
+
+**Acceptance:** name exact source SHA/tree, runtime/toolchain, positive and negative checks and execution receipt before claiming support. Host-only tests and empty CI steps do not prove guest execution.
