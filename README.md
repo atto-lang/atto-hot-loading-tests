@@ -44,6 +44,12 @@ AttoLang is the canonical project name; new source, examples and documentation u
 
 **Acceptance:** name exact source SHA/tree, runtime/toolchain, positive and negative checks and execution receipt before claiming support. Host-only tests and empty CI steps do not prove guest execution.
 
+## Generation-fenced reload reference (host-only)
+
+`reference/generation_inbox.py` provides a bounded mailbox/anti-replay model for host test fixtures: each message carries a generation and ticket; duplicate tickets are rejected even after delivery, reload invalidates old generations and pending messages, and close is terminal. Each generation has a finite ticket-memory budget. Run `python3 -m unittest discover -s tests -v` to exercise stale, replay, reload and closed cases.
+
+This is **not** a verified Atto actor reload implementation. Real hot loading requires exact executable artifact identity, stop-the-world/lease quiescence, safe state migration, concurrent proof and host/guest execution receipts; this reference only defines observable admission behavior.
+
 ## Legacy provenance and transfer verification
 
 The historical predecessor, `ores-truffle-oreslang/oreslang-hot-loading-tests`, is archived; the current `atto-lang/atto-hot-loading-tests` has a separate numeric GitHub repository ID. Preserve working legacy `.ores` fixtures and package/CLI aliases until their canonical `.atto` replacements are verified. The scope is generation-fenced hot-reload, quiescence, rollback, quarantine and actor ABI regression fixtures, not production release orchestration or unverified backend certification.
